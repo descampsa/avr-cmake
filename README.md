@@ -3,11 +3,13 @@ It is composed of a cmake toolchain file (generic-avr-gcc.cmake), and a example 
 
 Basic usage:
 
-mkdir build
-cd build
-cmake ..
-make example #compile
-make upload_example #upload to arduino
+```sh
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make example #compile
+$ make upload_example #upload to arduino
+```
 
 You may need to edit CMakeLists.txt if you use another arduino than Uno or if it use another port than /dev/ttyACM0.
 The arduino LED should blink once per second if everything went right.
