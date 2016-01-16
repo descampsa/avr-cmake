@@ -12,6 +12,7 @@ set(AVR_MCU atmega328p)
 set(MCU_FREQ 16000000UL)
 set(AVR_PROGRAMMER arduino)
 set(AVR_PROGRAMMER_PORT /dev/ttyACM0)
+set(PROGRAM_EEPROM False)
 
 avr_add_executable(example example.cpp)
 

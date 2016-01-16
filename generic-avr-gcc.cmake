@@ -5,6 +5,7 @@
 # MCU_FREQ : clock frequency (defines F_CPU)
 # AVR_PROGRAMMER : programmer type for avrdude
 # AVR_PROGRAMMER_PORT : programmer port for avrdude (OS specific)
+# PROGRAM_EEPROM : enable eeprom programming (doesn't work on arduino)
 
 #generic avr flags
 set(AVR_CFLAGS "-ffunction-sections -fdata-sections" CACHE STRING "AVR compilation flags")
@@ -33,11 +34,18 @@ function(avr_add_executable_compilation EXECUTABLE)
 	
 	set(EXECUTABLE_ELF "${EXECUTABLE}.elf")
 	set(EXECUTABLE_HEX "${EXECUTABLE}.hex")
-	set(EXECUTABLE_EEPROM "${EXECUTABLE}_eeprom.hex")
+	if(${PROGRAM_EEPROM})
+		set(EXECUTABLE_EEPROM "${EXECUTABLE}_eeprom.hex")
+	endif(${PROGRAM_EEPROM})
 
 	# main target for the executable depends of hex and eeprom files
-	add_custom_target(${EXECUTABLE} ALL 
-		DEPENDS ${EXECUTABLE_HEX} ${EXECUTABLE_EEPROM})
+	if(${PROGRAM_EEPROM})
+		add_custom_target(${EXECUTABLE} ALL 
+			DEPENDS ${EXECUTABLE_HEX} ${EXECUTABLE_EEPROM})
+	else(${PROGRAM_EEPROM})
+		add_custom_target(${EXECUTABLE} ALL 
+			DEPENDS ${EXECUTABLE_HEX} ${EXECUTABLE_EEPROM})
+	endif(${PROGRAM_EEPROM})
 
 	# compile and link elf file
 	add_executable(${EXECUTABLE_ELF} ${ARGN})
@@ -51,9 +59,11 @@ function(avr_add_executable_compilation EXECUTABLE)
 		DEPENDS ${EXECUTABLE_ELF})
 
 	# rule for eeprom hex file
-	add_custom_command(OUTPUT ${EXECUTABLE_EEPROM}
-		COMMAND ${AVR-OBJCOPY} -j .eeprom --change-section-lma .eeprom=0 -O ihex ${EXECUTABLE_ELF} ${EXECUTABLE_EEPROM}
-		DEPENDS ${EXECUTABLE_ELF})
+	if(${PROGRAM_EEPROM})
+		add_custom_command(OUTPUT ${EXECUTABLE_EEPROM}
+			COMMAND ${AVR-OBJCOPY} -j .eeprom --change-section-lma .eeprom=0 -O ihex ${EXECUTABLE_ELF} ${EXECUTABLE_EEPROM}
+			DEPENDS ${EXECUTABLE_ELF})
+	endif(${PROGRAM_EEPROM})
 
 	# display size info after compilation
 	add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
@@ -63,9 +73,15 @@ endfunction(avr_add_executable_compilation)
 function(avr_add_executable_upload ${EXECUTABLE})
 	
 	# upload target
-	add_custom_target(upload_${EXECUTABLE} 
-		COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
-		DEPENDS ${EXECUTABLE})
+	if(${PROGRAM_EEPROM})
+		add_custom_target(upload_${EXECUTABLE} 
+			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
+			DEPENDS ${EXECUTABLE})
+	else(${PROGRAM_EEPROM})
+		add_custom_target(upload_${EXECUTABLE} 
+			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} -U flash:w:${EXECUTABLE}.hex
+			DEPENDS ${EXECUTABLE})
+	endif(${PROGRAM_EEPROM})
 endfunction(avr_add_executable_upload)
 
 function(avr_add_executable EXECUTABLE)
