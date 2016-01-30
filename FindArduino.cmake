@@ -1,7 +1,7 @@
 set(Arduino_FOUND False)
 
 # find root path
-if(NOT "${Arduino_ROOT_DIR}")
+if(NOT DEFINED Arduino_ROOT_DIR)
 	if(IS_DIRECTORY /usr/share/arduino)
 		set(Arduino_ROOT_DIR /usr/share/arduino CACHE PATH "Arduino root directory")
 	else(IS_DIRECTORY /usr/share/arduino)
@@ -11,17 +11,21 @@ if(NOT "${Arduino_ROOT_DIR}")
 			set(Arduino_ROOT_DIR NOTFOUND CACHE PATH "Arduino root directory")
 		endif(IS_DIRECTORY /usr/local/share/arduino)
 	endif(IS_DIRECTORY /usr/share/arduino)
-endif(NOT "${Arduino_ROOT_DIR}")
+endif(NOT DEFINED Arduino_ROOT_DIR)
 
 # default component (arduino core)
-if(NOT "${Arduino_FIND_COMPONENTS}")
+if(NOT DEFINED Arduino_FIND_COMPONENTS)
 	set(Arduino_FIND_COMPONENTS core_arduino)
-endif(NOT "${Arduino_FIND_COMPONENTS}")
+endif(NOT DEFINED Arduino_FIND_COMPONENTS)
+
+if(NOT DEFINED Arduino_USER_LIBRARIES_DIR)
+	set(Arduino_USER_LIBRARIES_DIR $ENV{HOME}/Arduino CACHE PATH "Arduino user libraries directory")
+endif(NOT DEFINED Arduino_USER_LIBRARIES_DIR)
 
 # default variant
-if(NOT "${Arduino_VARIANT}")
+if(NOT DEFINED Arduino_VARIANT)
 	set(Arduino_VARIANT standard CACHE STRING "Arduino variant (see ${Arduino_ROOT}/hardware/arduino/variants)")
-endif(NOT "${Arduino_VARIANT}")
+endif(NOT DEFINED Arduino_VARIANT)
 
 # check if all component are founds
 set(Arduino_FOUND True)
@@ -45,7 +49,14 @@ foreach(COMPONENT ${Arduino_FIND_COMPONENTS})
 			set(Arduino_INCLUDE_DIRS ${Arduino_INCLUDE_DIRS} "${Arduino_ROOT_DIR}/libraries/${COMPONENT}")
 			set(Arduino_LIBRARIES ${Arduino_LIBRARIES} "${COMPONENT}")
 		else(IS_DIRECTORY ${Arduino_ROOT_DIR}/libraries/${COMPONENT})
-			set(Arduino_FOUND_${COMPONENT} False)
+			if(IS_DIRECTORY ${Arduino_USER_LIBRARIES_DIR}/${COMPONENT})
+				set(Arduino_FOUND_${COMPONENT} True)
+				set(Arduino_${COMPONENT}_ROOT_DIR ${Arduino_USER_LIBRARIES_DIR}//${COMPONENT})
+				set(Arduino_INCLUDE_DIRS ${Arduino_INCLUDE_DIRS} "${Arduino_USER_LIBRARIES_DIR}/${COMPONENT}")
+				set(Arduino_LIBRARIES ${Arduino_LIBRARIES} "${COMPONENT}")
+			else(IS_DIRECTORY ${Arduino_USER_LIBRARIES_DIR}/${COMPONENT})
+				set(Arduino_FOUND_${COMPONENT} False)
+			endif(IS_DIRECTORY ${Arduino_USER_LIBRARIES_DIR}/${COMPONENT})
 		endif(IS_DIRECTORY ${Arduino_ROOT_DIR}/libraries/${COMPONENT})
 	endif(${COMPONENT} MATCHES core_.*)
 	
