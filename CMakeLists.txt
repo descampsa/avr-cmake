@@ -13,10 +13,11 @@ set(AVR_MCU atmega328p)
 set(MCU_FREQ 16000000UL)
 set(AVR_PROGRAMMER arduino)
 set(AVR_PROGRAMMER_PORT /dev/ttyACM0)
+#set(AVR_PROGRAMMER_BAUDRATE 19200)
 set(PROGRAM_EEPROM False)
 
 set(${Arduino_VARIANT} standard)
-find_package(Arduino REQUIRED)
+find_package(Arduino REQUIRED COMPONENTS core_arduino)
 
 #message(WARNING "TEST ${Arduino_INCLUDE_DIRS}")
 include_directories(${Arduino_INCLUDE_DIRS})

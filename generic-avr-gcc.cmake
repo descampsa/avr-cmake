@@ -34,18 +34,18 @@ function(avr_add_executable_compilation EXECUTABLE)
 	
 	set(EXECUTABLE_ELF "${EXECUTABLE}.elf")
 	set(EXECUTABLE_HEX "${EXECUTABLE}.hex")
-	if(${PROGRAM_EEPROM})
+	if(PROGRAM_EEPROM)
 		set(EXECUTABLE_EEPROM "${EXECUTABLE}_eeprom.hex")
-	endif(${PROGRAM_EEPROM})
+	endif(PROGRAM_EEPROM)
 
 	# main target for the executable depends of hex and eeprom files
-	if(${PROGRAM_EEPROM})
+	if(PROGRAM_EEPROM)
 		add_custom_target(${EXECUTABLE} ALL 
 			DEPENDS ${EXECUTABLE_HEX} ${EXECUTABLE_EEPROM})
-	else(${PROGRAM_EEPROM})
+	else(PROGRAM_EEPROM)
 		add_custom_target(${EXECUTABLE} ALL 
 			DEPENDS ${EXECUTABLE_HEX} ${EXECUTABLE_EEPROM})
-	endif(${PROGRAM_EEPROM})
+	endif(PROGRAM_EEPROM)
 
 	# compile and link elf file
 	add_executable(${EXECUTABLE_ELF} ${ARGN})
@@ -59,11 +59,11 @@ function(avr_add_executable_compilation EXECUTABLE)
 		DEPENDS ${EXECUTABLE_ELF})
 
 	# rule for eeprom hex file
-	if(${PROGRAM_EEPROM})
+	if(PROGRAM_EEPROM)
 		add_custom_command(OUTPUT ${EXECUTABLE_EEPROM}
 			COMMAND ${AVR-OBJCOPY} -j .eeprom --change-section-lma .eeprom=0 -O ihex ${EXECUTABLE_ELF} ${EXECUTABLE_EEPROM}
 			DEPENDS ${EXECUTABLE_ELF})
-	endif(${PROGRAM_EEPROM})
+	endif(PROGRAM_EEPROM)
 
 	# display size info after compilation
 	add_custom_command(TARGET ${EXECUTABLE} POST_BUILD
@@ -71,17 +71,20 @@ function(avr_add_executable_compilation EXECUTABLE)
 endfunction(avr_add_executable_compilation)
 
 function(avr_add_executable_upload ${EXECUTABLE})
+	if(AVR_PROGRAMMER_BAUDRATE)
+		set(AVR_PROGRAMMER_OPTIONS "-b ${AVR_PROGRAMMER_BAUDRATE}")
+	endif(AVR_PROGRAMMER_BAUDRATE)
 	
 	# upload target
-	if(${PROGRAM_EEPROM})
+	if(PROGRAM_EEPROM)
 		add_custom_target(upload_${EXECUTABLE} 
-			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
+			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
 			DEPENDS ${EXECUTABLE})
-	else(${PROGRAM_EEPROM})
+	else(PROGRAM_EEPROM)
 		add_custom_target(upload_${EXECUTABLE} 
-			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} -U flash:w:${EXECUTABLE}.hex
+			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex
 			DEPENDS ${EXECUTABLE})
-	endif(${PROGRAM_EEPROM})
+	endif(PROGRAM_EEPROM)
 endfunction(avr_add_executable_upload)
 
 function(avr_add_executable EXECUTABLE)
