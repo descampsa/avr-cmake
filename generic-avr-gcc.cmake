@@ -71,18 +71,24 @@ function(avr_add_executable_compilation EXECUTABLE)
 endfunction(avr_add_executable_compilation)
 
 function(avr_add_executable_upload ${EXECUTABLE})
+	set(AVR_PROGRAMMER_OPTIONS "")
+	
 	if(AVR_PROGRAMMER_BAUDRATE)
-		set(AVR_PROGRAMMER_OPTIONS "-b ${AVR_PROGRAMMER_BAUDRATE}")
+		set(AVR_PROGRAMMER_OPTIONS ${AVR_PROGRAMMER_OPTIONS} -b ${AVR_PROGRAMMER_BAUDRATE})
 	endif(AVR_PROGRAMMER_BAUDRATE)
+	
+	if(AVR_PROGRAMMER_PORT)
+		set(AVR_PROGRAMMER_OPTIONS ${AVR_PROGRAMMER_OPTIONS} -P ${AVR_PROGRAMMER_PORT})
+	endif(AVR_PROGRAMMER_PORT)
 	
 	# upload target
 	if(PROGRAM_EEPROM)
 		add_custom_target(upload_${EXECUTABLE} 
-			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
+			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex -U eeprom:w:${EXECUTABLE}_eeprom.hex
 			DEPENDS ${EXECUTABLE})
 	else(PROGRAM_EEPROM)
 		add_custom_target(upload_${EXECUTABLE} 
-			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} -P ${AVR_PROGRAMMER_PORT} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex
+			COMMAND ${AVRDUDE} -p ${AVR_MCU} -c ${AVR_PROGRAMMER} ${AVR_PROGRAMMER_OPTIONS} -U flash:w:${EXECUTABLE}.hex
 			DEPENDS ${EXECUTABLE})
 	endif(PROGRAM_EEPROM)
 endfunction(avr_add_executable_upload)
@@ -92,11 +98,11 @@ function(avr_add_executable EXECUTABLE)
 		message(FATAL_ERROR "AVR_MCU not defined")
 	endif(NOT AVR_MCU)
 	avr_add_executable_compilation(${EXECUTABLE} ${ARGN})
-	if(AVR_PROGRAMMER AND AVR_PROGRAMMER_PORT)
+	if(AVR_PROGRAMMER)
 		avr_add_executable_upload(${EXECUTABLE})
-	else(AVR_PROGRAMMER AND AVR_PROGRAMMER_PORT)
+	else(AVR_PROGRAMMER)
 		message(WARNING "Programmer not defined, upload target is not created")
-	endif(AVR_PROGRAMMER AND AVR_PROGRAMMER_PORT)
+	endif(AVR_PROGRAMMER)
 endfunction(avr_add_executable)
 
 function(avr_add_library LIBRARY)
